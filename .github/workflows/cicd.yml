@@ -74,7 +74,8 @@ jobs:
           from sklearn.ensemble import RandomForestRegressor
           from sklearn.model_selection import train_test_split
           from sklearn.metrics import mean_absolute_error, r2_score
-          from transforms import safe_log1p_absences
+          from fastapi_app.transforms import safe_log1p_absences
+
 
 
           data_path = os.getenv("DATA_PATH", "data/final.csv")
