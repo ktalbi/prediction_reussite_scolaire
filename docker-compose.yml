@@ -1,0 +1,131 @@
+services:
+  api:
+    build: fastapi_app
+    container_name: reussite_fastapi_app
+    ports:
+      - "${FASTAPI_PORT}:${FASTAPI_PORT}"
+    volumes:
+      - ./data:/data:ro
+      - mlflow_data:/mlflow
+      - ./inference_db:/app/inference_db 
+    environment:
+      FASTAPI_PORT: ${FASTAPI_PORT}
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_EXPERIMENT: ${MLFLOW_EXPERIMENT}
+      MLFLOW_ARTIFACT_ROOT: /mlflow/artifacts
+      MODEL_NAME: ${MODEL_NAME}
+      MODEL_ALIAS: ${MODEL_ALIAS}
+      MODEL_STAGE: ${MODEL_STAGE}
+      DATA_PATH: /data/final.csv
+      SEED_MODEL_PATH: /app/models/best_model_rf_seed.joblib #seed_model
+      INFER_DB_URL: sqlite:////app/inference_db/inference_logs.db
+    depends_on:
+      - mlflow
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+    networks:
+      - app_network
+
+  
+  mlflow:
+    image: python:3.11-slim
+    container_name: reussite_mlflow
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow_data:/mlflow
+    environment:
+      MLFLOW_BACKEND_STORE_URI: "sqlite:////mlflow/mlflow.db"
+      MLFLOW_DEFAULT_ARTIFACT_ROOT: "file:/mlflow/artifacts"
+    command: >
+      sh -c "
+      pip install --no-cache-dir mlflow==2.15.1 &&
+      mkdir -p /mlflow/artifacts &&
+      gunicorn -w 2 -b 0.0.0.0:5000 mlflow.server:app
+      "
+    networks:
+      - app_network
+
+
+
+
+  streamlit:
+    build: streamlit_app
+    container_name: reussite_streamlit_app
+    ports:
+      - "${STREAMLIT_PORT}:${STREAMLIT_PORT}"
+    depends_on:
+      api:
+       condition: service_healthy
+    environment:
+      API_URL: http://api:${FASTAPI_PORT}/
+           
+    networks:
+      - app_network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: reussite_prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    depends_on:
+      - api
+    networks:
+      - app_network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: reussite_grafana
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+    volumes:
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources      
+    depends_on:
+      - prometheus
+    networks:
+      - app_network
+
+  node_exporter:
+    image: prom/node-exporter:latest
+    container_name: reussite_node_exporter
+    restart: unless-stopped
+    command:
+      - '--path.rootfs=/host'
+    pid: host
+    volumes:
+      - /:/host:ro,rslave
+    networks:
+      - app_network
+
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: reussite_uptime-kuma
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      - uptime_kuma_data:/app/data
+    networks:
+      - app_network
+    depends_on:
+      - api
+
+networks:
+  app_network:
+
+volumes:
+  uptime_kuma_data:
+  mlflow_data:
