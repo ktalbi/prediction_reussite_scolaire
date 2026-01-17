@@ -1,5 +1,6 @@
-import numpy as np
 import importlib
+
+import numpy as np
 
 
 def _import_main_module():

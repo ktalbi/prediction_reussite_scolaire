@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def safe_log1p_absences(x):
     """
     Transformation stable et picklable :

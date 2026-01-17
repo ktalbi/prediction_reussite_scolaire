@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Literal, Annotated 
-from pydantic import BaseModel, ConfigDict, Field
+from typing import Annotated, Literal
 
+from pydantic import BaseModel, ConfigDict, Field
 
 School = Literal["GP", "MS"]
 Reason = Literal["course", "home", "other", "reputation"]

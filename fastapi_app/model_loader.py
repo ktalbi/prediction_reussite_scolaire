@@ -1,10 +1,13 @@
 import os
 import time
-import numpy as np
+
 import joblib
 import mlflow
 import mlflow.sklearn
+import numpy as np
+
 import __main__
+
 
 def _safe_log1p(x):
     return np.log1p(np.clip(x, 0, None))
@@ -71,7 +74,7 @@ class ModelHandle:
                 f"[MODEL] MLflow pas pret, fallback to seed: {seed_path}. Last err: {last_err}",
                 flush=True,
             )
-            setattr(__main__, "_safe_log1p", _safe_log1p)
+            __main__._safe_log1p = _safe_log1p
             self.model = joblib.load(seed_path)
             self.model_version = f"seed:{seed_path}"
             print(f"[MODEL] modèle seed chargé: {self.model_version}", flush=True)

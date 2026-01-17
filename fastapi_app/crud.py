@@ -1,8 +1,7 @@
 from datetime import UTC, datetime
 
-from sqlalchemy.orm import Session
-
 from db import InferenceLog
+from sqlalchemy.orm import Session
 
 
 def create_log(

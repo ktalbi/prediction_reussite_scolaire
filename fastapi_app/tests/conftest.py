@@ -1,6 +1,7 @@
+import importlib
 import os
 import sys
-import importlib
+
 import pytest
 from fastapi.testclient import TestClient
 

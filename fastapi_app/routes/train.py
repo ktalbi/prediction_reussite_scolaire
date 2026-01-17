@@ -6,7 +6,6 @@ from datetime import UTC, datetime
 import joblib
 import mlflow
 import mlflow.sklearn
-import numpy as np
 import pandas as pd
 from fastapi import APIRouter, HTTPException
 from mlflow.tracking import MlflowClient
@@ -16,10 +15,8 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, r2_score
 from sklearn.model_selection import KFold, RandomizedSearchCV, train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler, FunctionTransformer
+from sklearn.preprocessing import FunctionTransformer, OneHotEncoder, StandardScaler
 from transforms import safe_log1p_absences
-
-
 
 router = APIRouter()
 

@@ -2,23 +2,21 @@ import logging
 import time
 import uuid
 from datetime import UTC, datetime
-from typing import Optional
 
 import numpy as np
 import pandas as pd
+from crud import create_log, read_history
+from db import SessionLocal, init_db
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from prometheus_client import Counter, Gauge, Histogram
-from sqlalchemy import text
-from sqlalchemy.orm import Session
-
-from crud import create_log, read_history
-from db import SessionLocal, init_db
 from model_loader import model_handle
+from prometheus_client import Counter, Gauge, Histogram
 from routes.promote import router as promote_router
 from routes.train import router as train_router
 from schemas import HistoryItem, PredictionResponse, StudentFeatures
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 try:
     from prometheus_fastapi_instrumentator import Instrumentator
@@ -179,8 +177,8 @@ def model_info():
 def predict(
     payload: StudentFeatures,
     db: Session = Depends(get_db),
-    x_session_id: Optional[str] = Header(default=None, alias="X-Session-Id"),
-    session_id: Optional[str] = None,
+    x_session_id: str | None = Header(default=None, alias="X-Session-Id"),
+    session_id: str | None = None,
 ):
     """
     - on envoie au Pipeline sklearn exactement les mêmes colonnes
